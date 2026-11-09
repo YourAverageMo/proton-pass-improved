@@ -44,6 +44,7 @@ tests/mail/old/binaries/tokens.json
 # https://github.com/microsoft/WSL/issues/7456
 *:Zone.Identifier
 CLAUDE.md
+AGENTS.md
 CLAUDE.local.md
 AGENTS.local.md
 AGENTS.override.md
