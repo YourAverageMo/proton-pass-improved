@@ -55,6 +55,9 @@ const getWebpackArgs = (options, env) => {
     return `--env protonPackOptions=${JSON.stringify(options)} ${extraWebpackArgs}`;
 };
 
+// execa.command splits on spaces, so escape them in paths (e.g. C:\Users\First Last).
+const escapeSpaces = (value) => value.replaceAll(' ', '\\ ');
+
 const commandWithLog = (...args) => {
     // eslint-disable-next-line no-console
     console.log(styleText('cyan', args[0]), '\n');
@@ -72,7 +75,7 @@ addGlobalOptions(program.command('build').description('create an optimized produ
         const outputPath = path.resolve('./dist');
         await commandWithLog(`rm -rf ${outputPath}`);
         await commandWithLog(
-            `${require.resolve('webpack-cli/bin/cli.js')} --progress --output-path=${outputPath} ${webpackArgs}`,
+            `${escapeSpaces(require.resolve('webpack-cli/bin/cli.js'))} --progress --output-path=${escapeSpaces(outputPath)} ${webpackArgs}`,
             {
                 stdio: 'inherit',
             }
@@ -111,7 +114,7 @@ addGlobalOptions(program.command('dev-server').description('run locally'))
         const port = await getPort(options.port || 8080);
 
         await commandWithLog(
-            `${require.resolve('webpack-cli/bin/cli.js')} serve --progress --port=${port} ${webpackArgs}`,
+            `${escapeSpaces(require.resolve('webpack-cli/bin/cli.js'))} serve --progress --port=${port} ${webpackArgs}`,
             {
                 stdio: 'inherit',
             }
