@@ -38,9 +38,16 @@ export const getStoredShortcut = (): MaybeNull<string> => {
 /** Brings the window to the front, or hides it to the
  * tray when it's already the focused window. */
 export const toggleWindow = (window: BrowserWindow) => {
-    if (window.isVisible() && window.isFocused() && !window.isMinimized()) return hideWindowToTray(window);
+    if (window.isVisible() && window.isFocused() && !window.isMinimized()) {
+        logger.debug('[global-shortcut] hiding window to tray');
+        return hideWindowToTray(window);
+    }
 
-    if (window.isMinimized()) window.restore();
+    if (window.isMinimized()) {
+        logger.debug('[global-shortcut] showing window (restored from minimized)');
+        window.restore();
+    } else logger.debug('[global-shortcut] showing window');
+
     window.show();
     window.focus();
 
