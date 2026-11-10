@@ -21,7 +21,7 @@ type ClipboardAction = 'settings';
 
 export type ClipboardContextValue = {
     /** Resolves to `true` when the value was written now, `false` when
-     * the clipboard settings modal took over or the write failed */
+     * the clipboard settings modal took over or the write threw */
     copyToClipboard: (content: string) => Promise<boolean>;
     setClipboardTTL: (timeoutMs: ClipboardTTL, silent?: boolean) => void;
 };
