@@ -285,6 +285,12 @@ describe('GlobalShortcut', () => {
             expect(bridge.set).not.toHaveBeenCalled();
         });
 
+        test('warns when a copy shortcut equals the summon shortcut', async () => {
+            const { row } = await setup({ accelerator: 'Control+Shift+C', active: true });
+            expect(row(PASSWORD).getByText(IN_USE)).toBeDefined();
+            expect(row(EMAIL).queryByText(IN_USE)).toBeNull();
+        });
+
         test('suspends the summon shortcut while recording', async () => {
             const { row } = await setup();
             const password = row(PASSWORD);

@@ -229,6 +229,10 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
                 {target === 'summon' && !isRecording && accelerator && !active && (
                     <span className="block color-danger text-sm mt-1">{getShortcutTakenMessage()}</span>
                 )}
+                {/* The summon shortcut is OS-wide, so it wins over a copy shortcut with the same keys */}
+                {target !== 'summon' && !isRecording && value && value === accelerator && (
+                    <span className="block color-danger text-sm mt-1">{getShortcutInUseMessage()}</span>
+                )}
             </ShortcutRow>
         );
     };
