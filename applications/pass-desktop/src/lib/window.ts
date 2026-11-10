@@ -9,12 +9,9 @@ declare module './ipc' {
     interface IPCChannels {
         'window:show': IPCChannel<[void], void>;
         'window:hide': IPCChannel<[void], void>;
+        'window:hideToTray': IPCChannel<[void], void>;
     }
 }
-
-export const setupIpcHandlers = (getWindow: () => MaybeNull<BrowserWindow>) => {
-    setupIpcHandler('window:show', () => getWindow()?.show());
-};
 
 export const onHideWindow = (getWindow: () => MaybeNull<BrowserWindow>) => {
     getWindow()?.webContents.send('window:hide');
@@ -26,4 +23,12 @@ export const hideWindowToTray = (window: BrowserWindow) => {
     window.hide();
     onHideWindow(() => window);
     if (isMac()) app.dock?.hide();
+};
+
+export const setupIpcHandlers = (getWindow: () => MaybeNull<BrowserWindow>) => {
+    setupIpcHandler('window:show', () => getWindow()?.show());
+    setupIpcHandler('window:hideToTray', () => {
+        const window = getWindow();
+        if (window && !window.isDestroyed() && window.isVisible()) hideWindowToTray(window);
+    });
 };

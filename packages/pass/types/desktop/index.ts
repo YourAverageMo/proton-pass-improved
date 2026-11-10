@@ -16,6 +16,7 @@ export * from './update';
 
 export type ContextBridgeApi = {
     windowShow: () => Promise<void>;
+    windowHide: () => Promise<void>;
 
     onWindowHide: (callback: () => void) => () => void;
 

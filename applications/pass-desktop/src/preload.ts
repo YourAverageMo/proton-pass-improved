@@ -27,6 +27,7 @@ const handler = <T extends keyof IPCChannels, P extends IPCChannels[T]['args']>(
 const contextBridgeApi: ContextBridgeApi = {
     /* window */
     windowShow: () => invoke('window:show'),
+    windowHide: () => invoke('window:hideToTray'),
     onWindowHide: (callback) => handler('window:hide', callback),
 
     /** client */
