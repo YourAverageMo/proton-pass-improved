@@ -72,6 +72,19 @@ describe('useArrowKeyNavigation', () => {
         expect(event.defaultPrevented).toBe(true);
     });
 
+    test('focuses without the browser scroll, then scrolls by the minimum amount', () => {
+        const target = byId('field-2');
+        const focus = jest.spyOn(target, 'focus');
+        const scrollIntoView = jest.fn();
+        target.scrollIntoView = scrollIntoView;
+
+        byId('field-1').focus();
+        press('ArrowDown');
+
+        expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    });
+
     test('reaches a field action button and comes back', () => {
         byId('field-1').focus();
         press('ArrowRight');

@@ -9,7 +9,7 @@ const CENTER_THRESHOLD = 1;
 const centerX = (rect: Rect) => (rect.left + rect.right) / 2;
 const centerY = (rect: Rect) => (rect.top + rect.bottom) / 2;
 
-const overlapsVertically = (a: Rect, b: Rect) => a.bottom > b.top && a.top < b.bottom;
+export const overlapsVertically = (a: Rect, b: Rect) => a.bottom > b.top && a.top < b.bottom;
 
 const contains = (outer: Rect, inner: Rect) =>
     outer.left <= inner.left && outer.right >= inner.right && outer.top <= inner.top && outer.bottom >= inner.bottom;

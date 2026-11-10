@@ -1,5 +1,5 @@
 import type { ArrowDirection, Rect } from './geometry';
-import { findBest } from './geometry';
+import { findBest, overlapsVertically } from './geometry';
 
 export const ZONE_ATTR = 'data-arrow-nav-zone';
 export const ENTRY_ATTR = 'data-arrow-nav-entry';
@@ -108,8 +108,7 @@ const getScrollParent = (el: Element): Element | null => {
     return null;
 };
 
-const intersectsVertically = (a: Rect, b: Rect) => a.bottom > b.top && a.top < b.bottom;
-const intersects = (a: Rect, b: Rect) => intersectsVertically(a, b) && a.right > b.left && a.left < b.right;
+const intersects = (a: Rect, b: Rect) => overlapsVertically(a, b) && a.right > b.left && a.left < b.right;
 
 /** Candidates in `root`. Elements scrolled out of their scroll container
  * (eg: overscan rows of the virtual list) only count when `from` shares
@@ -145,7 +144,7 @@ const resolveOverride = (selector: string): HTMLElement | null => {
             ? toRect(container.getBoundingClientRect())
             : { top: 0, bottom: window.innerHeight, left: 0, right: window.innerWidth };
 
-        if (intersectsVertically(rect, viewport) && (!best || rect.top < best.top)) best = { el, top: rect.top };
+        if (overlapsVertically(rect, viewport) && (!best || rect.top < best.top)) best = { el, top: rect.top };
     }
 
     return best?.el ?? matches[0] ?? null;
@@ -208,7 +207,9 @@ const ownsArrowKey = (el: Element, direction: ArrowDirection): boolean => {
 };
 
 const moveFocus = (target: HTMLElement, event: KeyboardEvent) => {
-    target.focus();
+    /* Chromium's focus scroll centers a partly clipped element:
+     * scroll it ourselves, by the minimum amount */
+    target.focus({ preventScroll: true });
     target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     event.preventDefault();
 };
