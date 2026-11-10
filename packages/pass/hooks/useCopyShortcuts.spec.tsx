@@ -1,13 +1,17 @@
 import type { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 
 import { act, renderHook } from '@testing-library/react-hooks';
+import { type MemoryHistory, createMemoryHistory } from 'history';
 import { createStore } from 'redux';
 
+import { getItemRoute, getNewItemRoute } from '../components/Navigation/routing';
 import { ITEM_KEY_ATTR } from '../lib/copy-shortcuts/copy-shortcuts';
 import { getItemKey } from '../lib/items/item.utils';
 import type { SelectedItem } from '../types/data/items';
 import type { ContextBridgeApi } from '../types/desktop';
+import { setupTestApp } from '../utils/tests/app';
 import { createTestLogin } from '../utils/tests/fixtures/items';
 import { createTestState } from '../utils/tests/state';
 
@@ -42,7 +46,12 @@ const listed = createTestLogin({ shareId: SHARE_ID, itemId: 'listed', name: 'Lis
 const noEmail = createTestLogin({ shareId: SHARE_ID, itemId: 'no-email', name: 'No email', username: 'john' });
 
 const store = createStore(() => createTestState({ items: [open, listed, noEmail] }));
-const wrapper: FC<PropsWithChildren> = ({ children }) => <Provider store={store}>{children}</Provider>;
+let history: MemoryHistory;
+const wrapper: FC<PropsWithChildren> = ({ children }) => (
+    <Provider store={store}>
+        <Router history={history}>{children}</Router>
+    </Provider>
+);
 
 const press = (init: KeyboardEventInit = { code: 'KeyC', ctrlKey: true }) => {
     const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
@@ -57,10 +66,12 @@ describe('useCopyShortcuts', () => {
     const windowHide = jest.fn(async () => {});
 
     beforeEach(() => {
+        setupTestApp();
         jest.useFakeTimers();
         document.body.innerHTML = '';
         window.getSelection()?.removeAllRanges();
         mockSelectedItem = { shareId: SHARE_ID, itemId: open.itemId };
+        history = createMemoryHistory({ initialEntries: [getItemRoute(SHARE_ID, open.itemId)] });
         mockCopyToClipboard.mockReset().mockResolvedValue(true);
         mockCreateNotification.mockReset();
         windowHide.mockClear();
@@ -91,6 +102,30 @@ describe('useCopyShortcuts', () => {
         await flush();
 
         expect(mockCopyToClipboard).toHaveBeenCalledWith('listed@proton.me');
+    });
+
+    test('ignores the open item while editing it', async () => {
+        history.replace(`${getItemRoute(SHARE_ID, open.itemId)}/edit`);
+        renderHook(() => useCopyShortcuts(), { wrapper });
+
+        const event = press();
+        await flush();
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(mockCopyToClipboard).not.toHaveBeenCalled();
+    });
+
+    test('ignores a focused list entry while creating an item', async () => {
+        history.replace(getNewItemRoute('login'));
+        document.body.innerHTML = `<a href="#" id="entry" ${ITEM_KEY_ATTR}="${getItemKey(listed)}">Listed</a>`;
+        document.getElementById('entry')!.focus();
+        renderHook(() => useCopyShortcuts(), { wrapper });
+
+        const event = press();
+        await flush();
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(mockCopyToClipboard).not.toHaveBeenCalled();
     });
 
     test('ignores keydowns from an input', async () => {

@@ -1,11 +1,19 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from 'react-redux';
+import { useRouteMatch } from 'react-router-dom';
 
 import { useNotifications } from '@proton/app-context/useNotifications';
 import noop from '@proton/utils/noop';
 
 import { usePassCore } from '../components/Core/PassCoreProvider';
 import { useSelectedItem } from '../components/Navigation/NavigationItem';
+import {
+    ItemScopes,
+    getItemHistoryRoute,
+    getItemRoute,
+    getNewItemRoute,
+    subPath,
+} from '../components/Navigation/routing';
 import { useCopyToClipboard } from '../components/Settings/Clipboard/ClipboardProvider';
 import { MODAL_SELECTOR } from '../lib/arrow-navigation/dom';
 import {
@@ -29,6 +37,14 @@ import { otpGenerationErrorNotifcation } from './useOTPCode';
 /** Leaves time to see the "Copied to clipboard" notification before hiding */
 export const COPY_SHORTCUT_HIDE_DELAY_MS = 750;
 
+/** Item forms and history, where the shortcuts must not copy the saved item */
+const getItemFormRoutes = () =>
+    ItemScopes.flatMap((scope) => [
+        subPath(getItemRoute(':shareId', ':itemId', { scope }), 'edit'),
+        getItemHistoryRoute(':shareId', ':itemId', { scope }),
+        getNewItemRoute(undefined, scope),
+    ]);
+
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
 const isEditable = (el: MaybeNull<Element>) => el?.closest(EDITABLE_SELECTOR) != null;
@@ -48,8 +64,13 @@ const useCopyShortcutsImpl = () => {
     const { createNotification } = useNotifications();
     const selectedItem = useSelectedItem();
 
+    const inItemForm = useRouteMatch(getItemFormRoutes()) !== null;
+
     const openItem = useRef<MaybeNull<UniqueItem>>(null);
     openItem.current = selectedItem ? { shareId: selectedItem.shareId, itemId: selectedItem.itemId } : null;
+
+    const inItemFormRef = useRef(inItemForm);
+    inItemFormRef.current = inItemForm;
 
     useEffect(() => {
         const platform = getAcceleratorPlatform(BUILD_TARGET);
@@ -69,7 +90,7 @@ const useCopyShortcutsImpl = () => {
             const state = store.getState();
             const shortcuts = resolveCopyShortcuts(selectCopyShortcuts(state), platform);
             const field = getCopyShortcutField(event, shortcuts, platform);
-            if (!field) return;
+            if (!field || inItemFormRef.current) return;
 
             if (isEditable(document.activeElement) || isEditable(event.target as MaybeNull<Element>)) return;
             if (hasTextSelection() || document.querySelector(MODAL_SELECTOR)) return;
