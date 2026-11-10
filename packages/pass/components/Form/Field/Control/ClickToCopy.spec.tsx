@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 
 import { ClickToCopy } from './ClickToCopy';
 
-const copyToClipboard = jest.fn().mockResolvedValue(undefined);
+const copyToClipboard = jest.fn().mockResolvedValue(true);
 
 jest.mock('../../../Settings/Clipboard/ClipboardProvider', () => ({
     useCopyToClipboard: () => copyToClipboard,

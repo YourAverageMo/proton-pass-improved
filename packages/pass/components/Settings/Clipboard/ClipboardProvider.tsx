@@ -20,7 +20,9 @@ import { ClipboardSettingsModal } from './ClipboardSettingsModal';
 type ClipboardAction = 'settings';
 
 export type ClipboardContextValue = {
-    copyToClipboard: (content: string) => Promise<void>;
+    /** Resolves to `true` when the value was written now, `false` when
+     * the clipboard settings modal took over or the write failed */
+    copyToClipboard: (content: string) => Promise<boolean>;
     setClipboardTTL: (timeoutMs: ClipboardTTL, silent?: boolean) => void;
 };
 
@@ -83,7 +85,10 @@ export const ClipboardProvider: FC<PropsWithChildren<Props>> = ({ children, chec
                     setCachedCopy(value);
                     setHasPermissions(hasPermissions);
                     setModal('settings');
-                } else await onCopyToClipboard(value, ttl);
+                    return false;
+                }
+
+                return onCopyToClipboard(value, ttl);
             },
             setClipboardTTL: (timeoutMs, silent = false) => {
                 dispatch(settingsEditIntent('behaviors', { clipboard: { timeoutMs } }, silent));
