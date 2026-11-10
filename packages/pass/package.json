@@ -149,6 +149,7 @@
         "./hooks/auth/useReauthActionHandler": "./hooks/auth/useReauthActionHandler.ts",
         "./hooks/import/useImportForm": "./hooks/import/useImportForm.ts",
         "./hooks/useActivityProbe": "./hooks/useActivityProbe.ts",
+        "./hooks/useArrowKeyNavigation": "./hooks/useArrowKeyNavigation.ts",
         "./hooks/useAsyncModalHandles": "./hooks/useAsyncModalHandles.ts",
         "./hooks/useConfirm": "./hooks/useConfirm.ts",
         "./hooks/useContextFactory": "./hooks/useContextFactory.ts",
