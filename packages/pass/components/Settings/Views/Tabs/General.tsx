@@ -6,6 +6,7 @@ import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 import { PassFeature } from '../../../../types/api/features';
 import { ApplicationLogs } from '../../ApplicationLogs';
 import { Display } from '../../Display';
+import { GlobalShortcut } from '../../GlobalShortcut';
 import { Locale } from '../../Locale';
 import { Offline } from '../../Offline';
 import { SshAgent } from '../../SshAgent/SshAgent';
@@ -22,6 +23,7 @@ export const General: FC = () => {
         <Locale key="locale" />,
         <Theme key="theme" />,
         <Display key="display" />,
+        DESKTOP_BUILD && <GlobalShortcut key="global-shortcut" />,
         OFFLINE_SUPPORTED && <Offline key="offline" />,
         showSshAgent && <SshAgent key="ssh-agent" />,
         <ApplicationLogs style={{ '--h-custom': '18.75rem' }} key="logs" />,

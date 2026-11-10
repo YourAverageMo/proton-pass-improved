@@ -55,6 +55,12 @@ export type ContextBridgeApi = {
     onNmRequest: (callback: (request: NativeMessagePayload<NativeMessageRequest>) => void) => () => void;
     nmResponse: (response: NativeMessagePayload<NativeMessageResponse>) => Promise<void>;
 
+    globalShortcut: {
+        get: () => Promise<GlobalShortcutState>;
+        set: (accelerator: MaybeNull<string>) => Promise<void>;
+        setSuspended: (suspended: boolean) => Promise<void>;
+    };
+
     sshAgent: {
         clear: () => Promise<void>;
         destroy: () => Promise<void>;
@@ -67,3 +73,11 @@ export type ContextBridgeApi = {
 };
 
 export type DesktopTheme = 'dark' | 'light' | 'system';
+
+export type GlobalShortcutState = {
+    /** Electron accelerator, `null` when no shortcut is set */
+    accelerator: MaybeNull<string>;
+    /** Whether the OS accepted the shortcut. `false` when
+     * another application already registered it. */
+    active: boolean;
+};

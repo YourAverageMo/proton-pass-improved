@@ -224,6 +224,7 @@
         "./lib/file-storage/types": "./lib/file-storage/types.ts",
         "./lib/filters/preferences": "./lib/filters/preferences.ts",
         "./lib/folders/folders.requests": "./lib/folders/folders.requests.ts",
+        "./lib/global-shortcut/accelerator": "./lib/global-shortcut/accelerator.ts",
         "./lib/globals/browser": "./lib/globals/browser.ts",
         "./lib/i18n/service": "./lib/i18n/service.ts",
         "./lib/import/tutorials": "./lib/import/tutorials.tsx",

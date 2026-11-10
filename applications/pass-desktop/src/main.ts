@@ -10,6 +10,7 @@ import { handleDeepLink, pickDeepLinkFromArgv, testDeepLinkSupport } from './lib
 import { authInterceptors } from './lib/auth/interceptors';
 import { migrateSameSiteCookies, upgradeSameSiteCookies } from './lib/cookies';
 import { PLATFORM_CLIENT_ID } from './lib/env';
+import { registerGlobalShortcut } from './lib/global-shortcut';
 import { fixSSOUrl } from './lib/sso';
 import { flushAll, installCookieFlush } from './lib/storage/storage.flush';
 import { getTheme } from './lib/theming';
@@ -17,7 +18,7 @@ import { setTagCookie } from './lib/updater/helpers';
 import { getUpdateStore } from './lib/updater/store';
 import { startUpdater } from './lib/updater/updater';
 import { userAgent } from './lib/user-agent';
-import { onHideWindow } from './lib/window';
+import { hideWindowToTray } from './lib/window';
 import { getWindowConfig, registerWindowManagementHandlers } from './lib/window-management';
 import { setApplicationMenu } from './menu-view/application-menu';
 import { startup } from './startup';
@@ -125,11 +126,9 @@ const createWindow = async (session: Session): Promise<BrowserWindow> => {
     });
 
     ctx.window.on('close', (e) => {
-        if (!ctx.quitting) {
+        if (!ctx.quitting && ctx.window) {
             e.preventDefault();
-            ctx.window?.hide();
-            onHideWindow(() => ctx.window);
-            if (isMac()) app.dock?.hide();
+            hideWindowToTray(ctx.window);
         }
     });
 
@@ -254,6 +253,8 @@ app.addListener('before-quit', () => (ctx.quitting = true));
 autoUpdater.addListener('before-quit-for-update', () => (ctx.quitting = true));
 
 await createWindow(ctx.session);
+
+registerGlobalShortcut();
 
 // Windows cold-launch via deep link: the OS spawns the app with the URL
 // in process.argv. Has no effect on macOS (open-url fires instead).

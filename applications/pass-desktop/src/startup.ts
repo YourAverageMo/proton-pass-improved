@@ -5,6 +5,7 @@ import biometrics from './lib/biometrics';
 import { setupIpcHandlers as client } from './lib/client';
 import { setupIpcHandlers as clipboard } from './lib/clipboard/clipboard.ipc';
 import contextMenu from './lib/context-menu';
+import { setupIpcHandlers as globalShortcut, unregisterGlobalShortcut } from './lib/global-shortcut';
 import { setupIpcHandlers as info } from './lib/install-info';
 import { nativeMessaging } from './lib/native-messaging/startup';
 import { setupIpcHandlers as navigation } from './lib/navigation';
@@ -35,6 +36,7 @@ export const startup = async (app: Electron.App, ctx: PassElectronContext) => {
     autotype(() => ctx.window);
     contextMenu(() => ctx.window);
     sshAgent(() => ctx.window);
+    globalShortcut(() => ctx.window);
     update(
         () => ctx.window,
         () => ctx.session
@@ -44,6 +46,7 @@ export const startup = async (app: Electron.App, ctx: PassElectronContext) => {
 
     // Return cleanup function
     return async () => {
+        unregisterGlobalShortcut();
         await shutdownNativeMessaging();
     };
 };

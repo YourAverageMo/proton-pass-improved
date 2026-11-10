@@ -14,6 +14,8 @@ type RootStore = {
     theme?: DesktopTheme;
     windowConfig?: WindowConfigStoreProperties;
     sshAgentSettingEnabled?: boolean;
+    /** Electron accelerator that summons/dismisses the main window */
+    globalShortcut?: string;
 };
 
 export const store = new Store<RootStore>({

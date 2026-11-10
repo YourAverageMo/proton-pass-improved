@@ -77,6 +77,13 @@ const contextBridgeApi: ContextBridgeApi = {
     onNmRequest: (callback) => handler('nm:request', callback),
     nmResponse: (props) => invoke('nm:response', props),
 
+    /* global shortcut */
+    globalShortcut: {
+        get: () => invoke('globalShortcut:get'),
+        set: (accelerator) => invoke('globalShortcut:set', accelerator),
+        setSuspended: (suspended) => invoke('globalShortcut:setSuspended', suspended),
+    },
+
     /* ssh agent */
     sshAgent: {
         clear: () => invoke('sshAgent:clear'),
