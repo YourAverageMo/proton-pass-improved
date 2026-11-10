@@ -15,6 +15,7 @@ import type { ItemFilters, ItemRevision, SelectedItem } from '../../../types/dat
 import { useBulkEnabled, useBulkSelection } from '../../Bulk/BulkSelectionState';
 import { useContextMenu } from '../../ContextMenu/ContextMenuProvider';
 import { VirtualList } from '../../Layout/List/VirtualList';
+import { bidirectionalOverscanIndicesGetter } from '../../Layout/List/overscan';
 import { ItemsListContextMenu, useItemContextMenu } from '../ContextMenu/ItemsListContextMenu';
 import { ItemsListItem } from './ItemsListItem';
 
@@ -82,6 +83,7 @@ export const ItemsListBase: FC<Props> = ({ items, filters, selectedItem, onSelec
                     interpolationIndexes={interpolationIndexes}
                     ref={listRef}
                     containerRef={containerRef}
+                    overscanIndicesGetter={bidirectionalOverscanIndicesGetter}
                     rowCount={interpolation.length}
                     rowHeight={(idx) => (interpolationIndexes.includes(idx) ? 28 : 54)}
                     rowRenderer={({ style, index, key }) => {

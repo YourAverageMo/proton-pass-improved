@@ -4,6 +4,8 @@ import { findBest, overlapsVertically } from './geometry';
 export const ZONE_ATTR = 'data-arrow-nav-zone';
 export const ENTRY_ATTR = 'data-arrow-nav-entry';
 export const ITEM_ATTR = 'data-arrow-nav-item';
+/** Printable keys typed outside an input move focus to this element */
+export const TYPE_TARGET_ATTR = 'data-arrow-nav-type-target';
 
 /** Value is a selector: the arrow key in that direction focuses
  * the topmost visible element matching it */
@@ -233,11 +235,14 @@ const findTarget = (active: Element, direction: ArrowDirection): HTMLElement | n
         if (target) return target;
     }
 
-    const inZone = pickBest(
-        active,
-        getCandidates(zone, active).filter((el) => el !== active),
-        direction
-    );
+    const candidates = getCandidates(zone, active).filter((el) => el !== active);
+
+    /* Inside a scroll container, try its own candidates first. A row
+     * scrolled out of view sits behind whatever covers the container's
+     * edge (eg: the filter bar), so plain geometry could pick that instead. */
+    const container = getScrollParent(active);
+    const scoped = container ? candidates.filter((el) => container.contains(el)) : [];
+    const inZone = pickBest(active, scoped, direction) ?? pickBest(active, candidates, direction);
 
     if (inZone) return inZone;
 
@@ -256,8 +261,33 @@ const handleEnter = (active: Element, event: KeyboardEvent) => {
     active.click();
 };
 
+/** Whether keys typed while `active` has focus should go to the type target */
+const isTypeRedirectable = (active: Element): boolean => {
+    if (active === document.body) return document.querySelector(MODAL_SELECTOR) === null;
+    if (!getZone(active) || active.closest(ARROW_OWNERS)) return false;
+    if (active.matches('input, textarea, select')) return false;
+    return !(active instanceof HTMLElement && active.isContentEditable);
+};
+
+/** Moves focus to the type target without preventing the default:
+ * focus changes during `keydown`, so the browser inserts the
+ * character into the newly focused input and none is lost. */
+const handleTyping = (event: KeyboardEvent) => {
+    if (event.key.length !== 1 || event.key === ' ') return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+    const active = document.activeElement ?? document.body;
+    if (!isTypeRedirectable(active)) return;
+
+    const target = Array.from(document.querySelectorAll(`[${TYPE_TARGET_ATTR}]`)).find(isCandidate);
+    target?.focus();
+};
+
 export const onArrowNavigationKeyDown = (event: KeyboardEvent) => {
     if (event.defaultPrevented || event.isComposing) return;
+
+    handleTyping(event);
+
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
 
     const direction = KEY_DIRECTIONS[event.key];

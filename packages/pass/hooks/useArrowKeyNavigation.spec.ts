@@ -31,7 +31,8 @@ const LAYOUT = `
     </div>
     <div id="header" data-arrow-nav-zone="header" data-rect="200,0,1000,60">
         <button id="menu" data-rect="210,10,40,40">Menu</button>
-        <input id="search" type="text" value="hello" data-arrow-nav-down="[data-arrow-nav-item='result']" data-rect="260,10,600,40" />
+        <input id="search" type="text" value="hello" data-arrow-nav-down="[data-arrow-nav-item='result']" data-rect="260,10,600,40" data-arrow-nav-type-target
+            />
         <button id="upsell" data-rect="870,10,40,40">Upgrade</button>
     </div>
     <div id="list" data-arrow-nav-zone="list" data-rect="200,60,400,740">
@@ -50,6 +51,7 @@ const LAYOUT = `
             </div>
             <div id="field-2" tabindex="0" role="button" data-rect="610,190,580,60">Field 2</div>
             <textarea id="note" data-rect="610,260,580,100"></textarea>
+            <input id="other" type="text" data-rect="610,370,580,40" />
         </div>
     </div>
     <div id="outside" data-rect="0,900,100,30"><button id="portal-button" data-rect="0,900,100,30">Portal</button></div>
@@ -225,6 +227,110 @@ describe('useArrowKeyNavigation', () => {
             expect(press('Enter').defaultPrevented).toBe(false);
             expect(onClick).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe('useArrowKeyNavigation typing', () => {
+    let unmount: () => void;
+
+    beforeEach(() => {
+        mount(LAYOUT);
+        unmount = renderHook(() => useArrowKeyNavigation(true)).unmount;
+    });
+
+    afterEach(() => unmount());
+
+    test('a printable key from a result row focuses the search input without preventing default', () => {
+        byId('row-1').focus();
+        const event = press('e');
+        expect(document.activeElement).toBe(byId('search'));
+        expect(event.defaultPrevented).toBe(false);
+    });
+
+    test('works with Shift', () => {
+        byId('row-1').focus();
+        press('E', { shiftKey: true });
+        expect(document.activeElement).toBe(byId('search'));
+    });
+
+    test('works from body', () => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        press('e');
+        expect(document.activeElement).toBe(byId('search'));
+    });
+
+    test.each(['altKey', 'ctrlKey', 'metaKey'])('ignores %s', (modifier) => {
+        byId('row-1').focus();
+        press('e', { [modifier]: true });
+        expect(document.activeElement).toBe(byId('row-1'));
+    });
+
+    test.each([' ', 'Enter', 'Tab'])('ignores %j', (key) => {
+        byId('field-2').focus();
+        press(key);
+        expect(document.activeElement).not.toBe(byId('search'));
+    });
+
+    test.each(['other', 'note'])('leaves keys typed in #%s alone', (id) => {
+        byId(id).focus();
+        press('e');
+        expect(document.activeElement).toBe(byId(id));
+    });
+
+    test('ignores focus outside every zone', () => {
+        byId('portal-button').focus();
+        press('e');
+        expect(document.activeElement).toBe(byId('portal-button'));
+    });
+
+    test('does nothing without a type target', () => {
+        byId('search').removeAttribute('data-arrow-nav-type-target');
+        byId('row-1').focus();
+        press('e');
+        expect(document.activeElement).toBe(byId('row-1'));
+    });
+});
+
+/* A date heading (110-138) sits at the top of the scrolled list and the
+ * entry above it is scrolled out, behind the filter bar. It is farther
+ * from the top row than the filter button is. */
+const SCROLLED_LIST = `
+    <div data-arrow-nav-zone="list" data-rect="200,60,400,740">
+        <button id="recent" data-rect="210,70,100,30">Recent</button>
+        <div style="overflow-y: auto" data-rect="200,110,400,690">
+            <a href="#" id="above" data-arrow-nav-item="result" data-rect="200,40,400,54">Above</a>
+            <a href="#" id="top" data-arrow-nav-item="result" data-rect="200,138,400,54">Top</a>
+        </div>
+    </div>
+`;
+
+describe('useArrowKeyNavigation in a scroll container', () => {
+    let unmount: () => void;
+
+    beforeEach(() => {
+        mount(SCROLLED_LIST);
+        unmount = renderHook(() => useArrowKeyNavigation(true)).unmount;
+    });
+
+    afterEach(() => unmount());
+
+    test('up from the top visible row picks the scrolled-out entry above it', () => {
+        byId('top').focus();
+        press('ArrowUp');
+        expect(document.activeElement).toBe(byId('above'));
+    });
+
+    test('up from the first row picks the filter button', () => {
+        byId('above').remove();
+        byId('top').focus();
+        press('ArrowUp');
+        expect(document.activeElement).toBe(byId('recent'));
+    });
+
+    test('down from the filter button picks the topmost visible row', () => {
+        byId('recent').focus();
+        press('ArrowDown');
+        expect(document.activeElement).toBe(byId('top'));
     });
 });
 

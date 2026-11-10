@@ -11,6 +11,8 @@ import { AutoSizer, List } from 'react-virtualized';
 
 import clsx from '@proton/utils/clsx';
 
+import type { OverscanIndicesGetter } from './overscan';
+
 import './VirtualList.scss';
 
 type Props = {
@@ -21,10 +23,20 @@ type Props = {
     rowHeight: (index: number) => number;
     rowRenderer: ListRowRenderer;
     containerRef?: RefObject<HTMLDivElement>;
+    overscanIndicesGetter?: OverscanIndicesGetter;
 };
 
 const VirtualListRender: ForwardRefRenderFunction<List, Props> = (
-    { interpolationIndexes = [], rowCount, rowHeight, onScroll, onScrollEnd, rowRenderer, containerRef },
+    {
+        interpolationIndexes = [],
+        rowCount,
+        rowHeight,
+        onScroll,
+        onScrollEnd,
+        rowRenderer,
+        containerRef,
+        overscanIndicesGetter,
+    },
     virtualListRef
 ) => {
     const [shadows, setShadows] = useState({ top: false, bottom: false });
@@ -76,6 +88,7 @@ const VirtualListRender: ForwardRefRenderFunction<List, Props> = (
                         style={{ overflowY: 'overlay' }}
                         ref={virtualListRef}
                         onScroll={handleScroll}
+                        {...(overscanIndicesGetter ? { overscanIndicesGetter } : {})}
                         onScrollbarPresenceChange={({ vertical }) => setShadows({ top: false, bottom: vertical })}
                         rowRenderer={rowRenderer}
                         rowCount={rowCount}

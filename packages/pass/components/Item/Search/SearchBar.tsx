@@ -114,6 +114,7 @@ export const SearchBar = memo(({ disabled, trash }: Props) => {
             autoFocus
             className="pass-searchbar"
             data-arrow-nav-down="[data-arrow-nav-item='result']"
+            data-arrow-nav-type-target
             inputClassName="text-rg text-ellipsis"
             disabled={disabled}
             onBlur={handleBlur}
