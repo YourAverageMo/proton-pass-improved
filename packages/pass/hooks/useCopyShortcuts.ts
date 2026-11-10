@@ -8,7 +8,12 @@ import { usePassCore } from '../components/Core/PassCoreProvider';
 import { useSelectedItem } from '../components/Navigation/NavigationItem';
 import { useCopyToClipboard } from '../components/Settings/Clipboard/ClipboardProvider';
 import { MODAL_SELECTOR } from '../lib/arrow-navigation/dom';
-import { getCopyShortcutField, getCopyShortcutValue, resolveCopyShortcuts } from '../lib/copy-shortcuts/copy-shortcuts';
+import {
+    ITEM_KEY_ATTR,
+    getCopyShortcutField,
+    getCopyShortcutValue,
+    resolveCopyShortcuts,
+} from '../lib/copy-shortcuts/copy-shortcuts';
 import { getAcceleratorPlatform } from '../lib/global-shortcut/accelerator';
 import { fromItemKey } from '../lib/items/item.utils';
 import { selectItem } from '../store/selectors/items';
@@ -23,8 +28,6 @@ import { otpGenerationErrorNotifcation } from './useOTPCode';
 
 /** Leaves time to see the "Copied to clipboard" notification before hiding */
 export const COPY_SHORTCUT_HIDE_DELAY_MS = 750;
-
-export const ITEM_KEY_ATTR = 'data-item-key';
 
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 

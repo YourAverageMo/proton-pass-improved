@@ -12,6 +12,7 @@ import clsx from '@proton/utils/clsx';
 import { useItemOptimisticState } from '../../../hooks/useItem';
 import type { DraggableItem } from '../../../hooks/useItemDrag';
 import { useItemLoading } from '../../../hooks/useItemLoading';
+import { ITEM_KEY_ATTR } from '../../../lib/copy-shortcuts/copy-shortcuts';
 import { isDisabledAliasItem } from '../../../lib/items/item.predicates';
 import { getItemKey } from '../../../lib/items/item.utils';
 import { matchChunks } from '../../../lib/search/match-chunks';
@@ -76,7 +77,7 @@ export const ItemsListItem = memo(
                     href="#"
                     id={id}
                     data-arrow-nav-item="result"
-                    data-item-key={getItemKey(item)}
+                    {...{ [ITEM_KEY_ATTR]: getItemKey(item) }}
                     data-arrow-nav-entry={active || undefined}
                     draggable={canDrag}
                     className={clsx([

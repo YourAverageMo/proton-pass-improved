@@ -7,6 +7,9 @@ import { deobfuscate } from '../../utils/obfuscate/xor';
 import type { AcceleratorKeyEvent, AcceleratorPlatform } from '../global-shortcut/accelerator';
 import { acceleratorFromKeyEvent, isValidAccelerator } from '../global-shortcut/accelerator';
 
+/** Marks an item-list entry with its item key (`getItemKey`) */
+export const ITEM_KEY_ATTR = 'data-item-key';
+
 export type CopyShortcutField = 'email' | 'username' | 'password' | 'totp';
 
 /** In the order shown in the settings */

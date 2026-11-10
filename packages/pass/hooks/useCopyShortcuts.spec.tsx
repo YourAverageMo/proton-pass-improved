@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { act, renderHook } from '@testing-library/react-hooks';
 import { createStore } from 'redux';
 
+import { ITEM_KEY_ATTR } from '../lib/copy-shortcuts/copy-shortcuts';
 import { getItemKey } from '../lib/items/item.utils';
 import type { SelectedItem } from '../types/data/items';
 import type { ContextBridgeApi } from '../types/desktop';
@@ -82,7 +83,7 @@ describe('useCopyShortcuts', () => {
     });
 
     test('prefers the focused list entry', async () => {
-        document.body.innerHTML = `<a href="#" id="entry" data-item-key="${getItemKey(listed)}"><span>Listed</span></a>`;
+        document.body.innerHTML = `<a href="#" id="entry" ${ITEM_KEY_ATTR}="${getItemKey(listed)}"><span>Listed</span></a>`;
         document.getElementById('entry')!.focus();
         renderHook(() => useCopyShortcuts(), { wrapper });
 
