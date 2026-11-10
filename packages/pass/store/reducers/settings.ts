@@ -4,6 +4,7 @@ import type { PassThemeOption } from '../../components/Layout/Theme/types';
 import { PASS_DEFAULT_THEME } from '../../constants';
 import { LockMode } from '../../lib/auth/lock/types';
 import type { ClipboardSettings } from '../../lib/clipboard/types';
+import type { CopyShortcutsSettings } from '../../lib/copy-shortcuts/copy-shortcuts';
 import type { GeneratePasswordConfig } from '../../lib/password/types';
 import type { OfflinePromptSettings } from '../../lib/settings/offline-prompt';
 import type { DomainCriterias } from '../../lib/settings/pause-list';
@@ -28,6 +29,8 @@ export type SettingsState = {
     autosuggest: AutoSuggestSettings;
     beta?: boolean;
     clipboard?: ClipboardSettings;
+    /** Desktop copy shortcuts: a missing key uses the default, `null` removes it */
+    copyShortcuts?: CopyShortcutsSettings;
     /** explicitly created, not including import */
     createdItemsCount: number;
     /** User controlled pause-list */
