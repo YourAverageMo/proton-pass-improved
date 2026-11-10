@@ -14,7 +14,6 @@ import {
 } from '../../lib/global-shortcut/accelerator';
 import type { GlobalShortcutState } from '../../types/desktop';
 import type { MaybeNull } from '../../types/utils';
-import { getErrorMessage } from '../../utils/errors/get-error-message';
 import { logger } from '../../utils/logger';
 import { SettingsPanel } from './SettingsPanel';
 import { ShortcutRow } from './ShortcutRow';
@@ -32,6 +31,9 @@ const getModifierHint = () => {
     }
 };
 
+const getShortcutTakenMessage = () =>
+    c('Warning').t`This shortcut is used by another application. Choose a different one.`;
+
 const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['globalShortcut'] }> = ({ bridge }) => {
     const { createNotification } = useNotifications();
 
@@ -46,16 +48,16 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
     const update = async (accelerator: MaybeNull<string>) => {
         setLoading(true);
         try {
-            await bridge.set(accelerator);
+            const saved = await bridge.set(accelerator);
+            if (!saved) createNotification({ type: 'error', text: getShortcutTakenMessage() });
         } catch (error) {
             logger.warn(`[GlobalShortcut] could not set shortcut`, error);
-            const errorMessage = getErrorMessage(error);
             createNotification({
                 type: 'error',
                 text:
                     accelerator === null
-                        ? c('Error').t`Could not remove the shortcut: ${errorMessage}`
-                        : c('Error').t`This shortcut is used by another application. Choose a different one.`,
+                        ? c('Error').t`Could not remove the shortcut.`
+                        : c('Error').t`Could not save the shortcut.`,
             });
         } finally {
             setLoading(false);
@@ -80,7 +82,8 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
         bridge.setSuspended(true).catch(noop);
     };
 
-    /* `set` re-enables the global shortcut in the main process */
+    /* No `setSuspended(false)` before `update`: setting a
+     * shortcut ends the suspension in the main process */
     const handleRemove = () => {
         stopRecording(false);
         void update(null);
@@ -106,7 +109,6 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
             if (result.type === 'pending') return;
             if (result.type === 'invalid') return setHint(getModifierHint());
 
-            /* `set` re-enables the global shortcut in the main process */
             stopRecording(false);
             void update(result.accelerator);
         };
@@ -159,9 +161,7 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
                 }
             >
                 {!recording && accelerator && !active && (
-                    <span className="block color-danger text-sm mt-1">
-                        {c('Warning').t`This shortcut is used by another application. Choose a different one.`}
-                    </span>
+                    <span className="block color-danger text-sm mt-1">{getShortcutTakenMessage()}</span>
                 )}
             </ShortcutRow>
         </SettingsPanel>

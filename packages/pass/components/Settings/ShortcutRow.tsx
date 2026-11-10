@@ -3,7 +3,7 @@ import type { FC, ReactNode } from 'react';
 import { c } from 'ttag';
 
 /** Key caps for a keyboard shortcut, one per key label */
-export const ShortcutKeys: FC<{ keys: string[] }> = ({ keys }) => (
+const ShortcutKeys: FC<{ keys: string[] }> = ({ keys }) => (
     <span className="flex items-center gap-1">
         {keys.map((key, i) => (
             <kbd
@@ -32,11 +32,11 @@ export const ShortcutRow: FC<ShortcutRowProps> = ({ description, keys, placehold
     <div className="flex flex-nowrap items-center justify-between gap-4">
         <div className="flex-1" aria-live="polite">
             <span className="block mb-1">
-                {(() => {
-                    if (placeholder) return <span className="color-weak">{placeholder}</span>;
-                    if (keys.length > 0) return <ShortcutKeys keys={keys} />;
-                    return <span className="color-weak">{c('Info').t`Not configured`}</span>;
-                })()}
+                {placeholder || keys.length === 0 ? (
+                    <span className="color-weak">{placeholder ?? c('Info').t`Not configured`}</span>
+                ) : (
+                    <ShortcutKeys keys={keys} />
+                )}
             </span>
             <span className="block color-weak text-sm">{description}</span>
             {children}

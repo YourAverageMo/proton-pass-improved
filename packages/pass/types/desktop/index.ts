@@ -57,7 +57,8 @@ export type ContextBridgeApi = {
 
     globalShortcut: {
         get: () => Promise<GlobalShortcutState>;
-        set: (accelerator: MaybeNull<string>) => Promise<void>;
+        /** Resolves to `false` when another application already registered the shortcut */
+        set: (accelerator: MaybeNull<string>) => Promise<boolean>;
         setSuspended: (suspended: boolean) => Promise<void>;
     };
 

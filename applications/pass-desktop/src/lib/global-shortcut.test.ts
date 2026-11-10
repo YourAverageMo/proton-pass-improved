@@ -16,7 +16,6 @@ jest.mock('electron', () => ({
             return true;
         }),
         unregister: jest.fn((accelerator: string) => mockRegistered.delete(accelerator)),
-        unregisterAll: jest.fn(() => mockRegistered.clear()),
     },
 }));
 
@@ -34,6 +33,21 @@ jest.mock('./ipc', () => ({
 
 jest.mock('../utils/logger', () => ({ log: noop, debug: noop, info: noop, warn: noop, error: noop }));
 
+const getMockWebContents = () => {
+    const listeners = new Map<string, Set<(...args: any[]) => void>>();
+    return {
+        send: jest.fn(),
+        isDestroyed: jest.fn(() => false),
+        on: jest.fn((event: string, listener: (...args: any[]) => void) => {
+            if (!listeners.has(event)) listeners.set(event, new Set());
+            listeners.get(event)!.add(listener);
+        }),
+        off: jest.fn((event: string, listener: (...args: any[]) => void) => listeners.get(event)?.delete(listener)),
+        emit: (event: string, ...args: any[]) => listeners.get(event)?.forEach((listener) => listener(...args)),
+        listenerCount: (event: string) => listeners.get(event)?.size ?? 0,
+    };
+};
+
 const getMockWindow = (state: { visible: boolean; focused: boolean; minimized: boolean }) => ({
     isVisible: jest.fn(() => state.visible),
     isFocused: jest.fn(() => state.focused),
@@ -43,7 +57,7 @@ const getMockWindow = (state: { visible: boolean; focused: boolean; minimized: b
     show: jest.fn(),
     focus: jest.fn(),
     hide: jest.fn(),
-    webContents: { send: jest.fn() },
+    webContents: getMockWebContents(),
 });
 
 const ipc = (channel: string, ...args: any[]) => mockHandlers.get(channel)!(...args);
@@ -130,7 +144,7 @@ describe('global-shortcut', () => {
             expect(window.show).toHaveBeenCalled();
         });
 
-        test('unregisters everything on quit', () => {
+        test('unregisters the shortcut on quit', () => {
             mockStore.set('globalShortcut', ACCELERATOR);
             module.registerGlobalShortcut();
             module.unregisterGlobalShortcut();
@@ -143,8 +157,8 @@ describe('global-shortcut', () => {
         beforeEach(() => module.registerGlobalShortcut());
 
         test('replaces the registered shortcut and persists it', () => {
-            ipc('globalShortcut:set', ACCELERATOR);
-            ipc('globalShortcut:set', OTHER_ACCELERATOR);
+            expect(ipc('globalShortcut:set', ACCELERATOR)).toBe(true);
+            expect(ipc('globalShortcut:set', OTHER_ACCELERATOR)).toBe(true);
 
             expect([...mockRegistered.keys()]).toEqual([OTHER_ACCELERATOR]);
             expect(mockStore.get('globalShortcut')).toBe(OTHER_ACCELERATOR);
@@ -168,7 +182,7 @@ describe('global-shortcut', () => {
             ipc('globalShortcut:set', ACCELERATOR);
             mockTaken.add(OTHER_ACCELERATOR);
 
-            expect(() => ipc('globalShortcut:set', OTHER_ACCELERATOR)).toThrow('used by another application');
+            expect(ipc('globalShortcut:set', OTHER_ACCELERATOR)).toBe(false);
             expect([...mockRegistered.keys()]).toEqual([ACCELERATOR]);
             expect(mockStore.get('globalShortcut')).toBe(ACCELERATOR);
         });
@@ -193,6 +207,34 @@ describe('global-shortcut', () => {
             ipc('globalShortcut:set', OTHER_ACCELERATOR);
 
             expect([...mockRegistered.keys()]).toEqual([OTHER_ACCELERATOR]);
+            expect(window.webContents.listenerCount('did-start-navigation')).toBe(0);
+        });
+
+        test('a taken shortcut ends the suspension and restores the previous one', () => {
+            ipc('globalShortcut:setSuspended', true);
+            mockTaken.add(OTHER_ACCELERATOR);
+
+            expect(ipc('globalShortcut:set', OTHER_ACCELERATOR)).toBe(false);
+            expect([...mockRegistered.keys()]).toEqual([ACCELERATOR]);
+        });
+
+        test.each([
+            ['the renderer reloads', 'did-start-navigation', { isMainFrame: true, isSameDocument: false }],
+            ['the renderer crashes', 'render-process-gone', {}],
+            ['the window closes', 'destroyed', undefined],
+        ])('ends the suspension when %s', (_, event, details) => {
+            ipc('globalShortcut:setSuspended', true);
+            window.webContents.emit(event, details);
+
+            expect([...mockRegistered.keys()]).toEqual([ACCELERATOR]);
+            expect(window.webContents.listenerCount(event)).toBe(0);
+        });
+
+        test('stays suspended on in-page navigation', () => {
+            ipc('globalShortcut:setSuspended', true);
+            window.webContents.emit('did-start-navigation', { isMainFrame: true, isSameDocument: true });
+
+            expect(mockRegistered.size).toBe(0);
         });
     });
 });

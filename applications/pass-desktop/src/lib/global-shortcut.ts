@@ -1,4 +1,4 @@
-import { type BrowserWindow, app, globalShortcut } from 'electron';
+import { type BrowserWindow, type WebContents, app, globalShortcut } from 'electron';
 
 import { getAcceleratorPlatform, isValidAccelerator } from '@proton/pass/lib/global-shortcut/accelerator';
 import type { GlobalShortcutState } from '@proton/pass/types/desktop';
@@ -14,7 +14,8 @@ import { hideWindowToTray } from './window';
 declare module './ipc' {
     interface IPCChannels {
         'globalShortcut:get': IPCChannel<[], GlobalShortcutState>;
-        'globalShortcut:set': IPCChannel<[accelerator: MaybeNull<string>], void>;
+        /** Resolves to `false` when another application already registered the shortcut */
+        'globalShortcut:set': IPCChannel<[accelerator: MaybeNull<string>], boolean>;
         'globalShortcut:setSuspended': IPCChannel<[suspended: boolean], void>;
     }
 }
@@ -28,6 +29,8 @@ let ready = false;
 /** Set while the settings UI records a new shortcut, so pressing
  * the current one is captured instead of toggling the window */
 let suspended = false;
+/** Removes the renderer listeners that end a suspension */
+let detachSuspensionListeners: MaybeNull<() => void> = null;
 let getWindow: () => MaybeNull<BrowserWindow> = () => null;
 
 export const getStoredShortcut = (): MaybeNull<string> => {
@@ -62,10 +65,10 @@ const onTrigger = () => {
     if (window && !window.isDestroyed()) toggleWindow(window);
 };
 
-/** Registers `accelerator` in place of the current shortcut.
- * Returns `false` when the OS refuses it, usually because
- * another application already registered it. */
-const apply = (accelerator: MaybeNull<string>): boolean => {
+/** Registers `accelerator` with the OS in place of the current shortcut.
+ * Returns `false` when the OS refuses it, usually because another
+ * application already registered it. */
+const registerAccelerator = (accelerator: MaybeNull<string>): boolean => {
     if (registered === accelerator) return true;
 
     if (registered) globalShortcut.unregister(registered);
@@ -84,26 +87,60 @@ const apply = (accelerator: MaybeNull<string>): boolean => {
     }
 };
 
-const sync = () => {
+/** Registers the stored shortcut, or nothing while suspended */
+const registerStoredShortcut = () => {
     if (!ready) return;
     const accelerator = suspended ? null : getStoredShortcut();
-    if (!apply(accelerator)) logger.warn(`[global-shortcut] "${accelerator}" is used by another application`);
+    if (!registerAccelerator(accelerator)) {
+        logger.warn(`[global-shortcut] "${accelerator}" is used by another application`);
+    }
 };
 
-const setShortcut = (accelerator: MaybeNull<string>) => {
+/** The settings UI ends a suspension when recording stops. If the renderer
+ * reloads, crashes or closes first, that never happens, so end it here. */
+const attachSuspensionListeners = (webContents: WebContents, resume: () => void) => {
+    const onNavigation = ({ isMainFrame, isSameDocument }: { isMainFrame: boolean; isSameDocument: boolean }) => {
+        if (isMainFrame && !isSameDocument) resume();
+    };
+
+    webContents.on('did-start-navigation', onNavigation);
+    webContents.on('render-process-gone', resume);
+    webContents.on('destroyed', resume);
+
+    return () => {
+        if (webContents.isDestroyed()) return;
+        webContents.off('did-start-navigation', onNavigation);
+        webContents.off('render-process-gone', resume);
+        webContents.off('destroyed', resume);
+    };
+};
+
+const setSuspended = (value: boolean) => {
+    detachSuspensionListeners?.();
+    detachSuspensionListeners = null;
+    suspended = value;
+
+    const webContents = getWindow()?.webContents;
+    if (suspended && webContents)
+        detachSuspensionListeners = attachSuspensionListeners(webContents, () => setSuspended(false));
+
+    registerStoredShortcut();
+};
+
+const setShortcut = (accelerator: MaybeNull<string>): boolean => {
     if (accelerator !== null && !isValidAccelerator(accelerator, platform)) throw new Error('Invalid shortcut');
 
-    suspended = false;
-
-    if (ready && !apply(accelerator)) {
-        sync();
-        throw new Error('Shortcut is used by another application');
+    if (ready && !registerAccelerator(accelerator)) {
+        setSuspended(false);
+        return false;
     }
 
     if (accelerator) store.set('globalShortcut', accelerator);
     else store.delete('globalShortcut');
 
+    setSuspended(false);
     logger.info(`[global-shortcut] set to ${accelerator ?? 'none'}`);
+    return true;
 };
 
 const getState = (): GlobalShortcutState => {
@@ -116,20 +153,17 @@ export const setupIpcHandlers = (windowGetter: () => MaybeNull<BrowserWindow>) =
 
     setupIpcHandler('globalShortcut:get', getState);
     setupIpcHandler('globalShortcut:set', setShortcut);
-    setupIpcHandler('globalShortcut:setSuspended', (value) => {
-        suspended = value === true;
-        sync();
-    });
+    setupIpcHandler('globalShortcut:setSuspended', (value) => setSuspended(value === true));
 };
 
 /** Call once the app is ready */
 export const registerGlobalShortcut = () => {
     ready = true;
-    sync();
+    registerStoredShortcut();
 };
 
 export const unregisterGlobalShortcut = () => {
-    if (!ready) return;
-    globalShortcut.unregisterAll();
+    if (!ready || !registered) return;
+    globalShortcut.unregister(registered);
     registered = null;
 };

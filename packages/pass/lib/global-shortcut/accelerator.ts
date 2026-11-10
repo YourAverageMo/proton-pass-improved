@@ -66,12 +66,18 @@ const CODE_TO_KEY: Record<string, string> = {
     NumpadDecimal: 'numdec',
 };
 
-const KEYS = new Set(Object.values(CODE_TO_KEY));
+const NON_ALPHANUMERIC_KEYS = new Set(Object.values(CODE_TO_KEY));
 
 /** Modifiers that make a shortcut safe to register globally. Shift alone
  * is not enough: `Shift+A` would capture every capital A typed anywhere. */
 const PRIMARY_MODIFIERS = new Set(['Command', 'Control', 'Alt', 'Super']);
 const MODIFIERS = new Set([...PRIMARY_MODIFIERS, 'Shift']);
+
+/** Electron accepts F1 to F24 */
+const isFunctionKey = (key: string) => {
+    const match = key.match(/^F([0-9]{1,2})$/);
+    return match !== null && Number(match[1]) >= 1 && Number(match[1]) <= 24;
+};
 
 const keyFromCode = (code: string): string | undefined => {
     const letter = code.match(/^Key([A-Z])$/);
@@ -83,17 +89,13 @@ const keyFromCode = (code: string): string | undefined => {
     const numpad = code.match(/^Numpad([0-9])$/);
     if (numpad) return `num${numpad[1]}`;
 
-    const fn = code.match(/^F([0-9]{1,2})$/);
-    if (fn && Number(fn[1]) >= 1 && Number(fn[1]) <= 24) return `F${fn[1]}`;
+    if (isFunctionKey(code)) return code;
 
     return CODE_TO_KEY[code];
 };
 
 const isKey = (key: string) =>
-    /^[A-Z0-9]$/.test(key) ||
-    /^num[0-9]$/.test(key) ||
-    (/^F([0-9]{1,2})$/.test(key) && Number(key.slice(1)) >= 1 && Number(key.slice(1)) <= 24) ||
-    KEYS.has(key);
+    /^[A-Z0-9]$/.test(key) || /^num[0-9]$/.test(key) || isFunctionKey(key) || NON_ALPHANUMERIC_KEYS.has(key);
 
 /** Builds an accelerator from a `keydown` event. Uses `code` rather than
  * `key` so the result doesn't change with the keyboard layout or with
@@ -122,6 +124,8 @@ export const acceleratorFromKeyEvent = (
 /** Checks an accelerator has the shape `acceleratorFromKeyEvent` produces:
  * unique known modifiers including a primary one, then exactly one key. */
 export const isValidAccelerator = (accelerator: unknown, platform: AcceleratorPlatform): accelerator is string => {
+    /* The longest valid accelerator is about 40 characters: the
+     * limit rejects oversized input before splitting it */
     if (typeof accelerator !== 'string' || accelerator.length > 64) return false;
 
     const parts = accelerator.split('+');
@@ -136,7 +140,7 @@ export const isValidAccelerator = (accelerator: unknown, platform: AcceleratorPl
     return parts.some((modifier) => PRIMARY_MODIFIERS.has(modifier));
 };
 
-const DISPLAY_NAMES: Record<AcceleratorPlatform, Record<string, string>> = {
+const MODIFIER_DISPLAY_NAMES: Record<AcceleratorPlatform, Record<string, string>> = {
     darwin: { Command: 'Cmd', Control: 'Ctrl', Alt: 'Option' },
     win32: { Control: 'Ctrl', Super: 'Win' },
     linux: { Control: 'Ctrl' },
@@ -157,7 +161,7 @@ const KEY_DISPLAY_NAMES: Record<string, string> = {
 /** Splits an accelerator into the labels shown on each key cap */
 export const getAcceleratorKeyLabels = (accelerator: string, platform: AcceleratorPlatform): string[] =>
     accelerator.split('+').map((part) => {
-        if (DISPLAY_NAMES[platform][part]) return DISPLAY_NAMES[platform][part];
+        if (MODIFIER_DISPLAY_NAMES[platform][part]) return MODIFIER_DISPLAY_NAMES[platform][part];
         if (KEY_DISPLAY_NAMES[part]) return KEY_DISPLAY_NAMES[part];
         if (/^num[0-9]$/.test(part)) return `Num ${part.slice(3)}`;
         return part;

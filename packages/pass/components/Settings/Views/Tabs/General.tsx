@@ -23,8 +23,8 @@ export const General: FC = () => {
         <Locale key="locale" />,
         <Theme key="theme" />,
         <Display key="display" />,
-        DESKTOP_BUILD && <GlobalShortcut key="global-shortcut" />,
         OFFLINE_SUPPORTED && <Offline key="offline" />,
+        DESKTOP_BUILD && <GlobalShortcut key="global-shortcut" />,
         showSshAgent && <SshAgent key="ssh-agent" />,
         <ApplicationLogs style={{ '--h-custom': '18.75rem' }} key="logs" />,
     ].filter(isTruthy);

@@ -4,12 +4,19 @@ import type { ContextBridgeApi, GlobalShortcutState } from '../../types/desktop'
 import { render } from '../../utils/tests/render';
 import { GlobalShortcut } from './GlobalShortcut';
 
+const mockCreateNotification = jest.fn();
+
+jest.mock('@proton/app-context/useNotifications', () => ({
+    useNotifications: () => ({ createNotification: mockCreateNotification }),
+}));
+
 const createBridge = (initial: GlobalShortcutState) => {
     let state = initial;
     return {
         get: jest.fn(async () => state),
-        set: jest.fn(async (accelerator: string | null) => {
+        set: jest.fn(async (accelerator: string | null): Promise<boolean> => {
             state = { accelerator, active: accelerator !== null };
+            return true;
         }),
         setSuspended: jest.fn(async () => {}),
     } satisfies ContextBridgeApi['globalShortcut'];
@@ -31,7 +38,10 @@ describe('GlobalShortcut', () => {
         return result;
     };
 
-    beforeEach(() => ((globalThis as any).DESKTOP_BUILD = true));
+    beforeEach(() => {
+        (globalThis as any).DESKTOP_BUILD = true;
+        mockCreateNotification.mockClear();
+    });
 
     afterEach(() => {
         (globalThis as any).DESKTOP_BUILD = false;
@@ -128,5 +138,32 @@ describe('GlobalShortcut', () => {
         fireEvent.click(getByText('Configure'));
         expect(queryByText('Remove')).toBeNull();
         expect(getByText('Cancel')).toBeDefined();
+    });
+
+    test('tells the user when another application holds the new shortcut', async () => {
+        const { getByText } = await setup();
+        bridge.set.mockResolvedValueOnce(false);
+
+        fireEvent.click(getByText('Configure'));
+        fireEvent.keyDown(window, { code: 'KeyP', ctrlKey: true, shiftKey: true });
+
+        await waitFor(() =>
+            expect(mockCreateNotification).toHaveBeenCalledWith({
+                type: 'error',
+                text: 'This shortcut is used by another application. Choose a different one.',
+            })
+        );
+    });
+
+    test('reports other failures without blaming another application', async () => {
+        const { getByText } = await setup();
+        bridge.set.mockRejectedValueOnce(new Error('Invalid shortcut'));
+
+        fireEvent.click(getByText('Configure'));
+        fireEvent.keyDown(window, { code: 'KeyP', ctrlKey: true, shiftKey: true });
+
+        await waitFor(() =>
+            expect(mockCreateNotification).toHaveBeenCalledWith({ type: 'error', text: 'Could not save the shortcut.' })
+        );
     });
 });
