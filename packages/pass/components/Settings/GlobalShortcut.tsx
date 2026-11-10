@@ -17,6 +17,7 @@ import type { MaybeNull } from '../../types/utils';
 import { getErrorMessage } from '../../utils/errors/get-error-message';
 import { logger } from '../../utils/logger';
 import { SettingsPanel } from './SettingsPanel';
+import { ShortcutRow } from './ShortcutRow';
 
 const platform = getAcceleratorPlatform(BUILD_TARGET);
 
@@ -30,20 +31,6 @@ const getModifierHint = () => {
             return c('Info').t`Include Ctrl, Alt or Super in the shortcut.`;
     }
 };
-
-const ShortcutKeys: FC<{ accelerator: string }> = ({ accelerator }) => (
-    <span className="flex items-center gap-1">
-        {getAcceleratorKeyLabels(accelerator, platform).map((label, i) => (
-            <kbd
-                key={i}
-                className="inline-flex items-center justify-center h-6 px-2 text-sm border border-weak rounded"
-                style={{ fontFamily: 'system-ui, sans-serif', minWidth: '1.5rem' }}
-            >
-                {label}
-            </kbd>
-        ))}
-    </span>
-);
 
 const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['globalShortcut'] }> = ({ bridge }) => {
     const { createNotification } = useNotifications();
@@ -93,6 +80,12 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
         bridge.setSuspended(true).catch(noop);
     };
 
+    /* `set` re-enables the global shortcut in the main process */
+    const handleRemove = () => {
+        stopRecording(false);
+        void update(null);
+    };
+
     useEffect(() => {
         void refresh();
     }, []);
@@ -137,46 +130,40 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
     const { accelerator, active } = state;
 
     return (
-        <SettingsPanel title={c('Label').t`Global shortcut`}>
-            <div className="flex flex-nowrap items-center justify-between gap-4">
-                <div className="flex-1" aria-live="polite">
-                    <span className="block mb-1">
-                        {(() => {
-                            if (recording) return <span className="color-weak">{c('Info').t`Press a shortcut…`}</span>;
-                            if (accelerator) return <ShortcutKeys accelerator={accelerator} />;
-                            return <span className="color-weak">{c('Info').t`Not configured`}</span>;
-                        })()}
-                    </span>
-                    <span className="block color-weak text-sm">
-                        {recording
-                            ? (hint ?? c('Info').t`Press Esc to cancel.`)
-                            : c('Info').t`Show or hide ${PASS_APP_NAME} from any application.`}
-                    </span>
-                    {!recording && accelerator && !active && (
-                        <span className="block color-danger text-sm mt-1">
-                            {c('Warning').t`This shortcut is used by another application. Choose a different one.`}
-                        </span>
-                    )}
-                </div>
-                <div className="flex flex-nowrap shrink-0 gap-2">
-                    {recording ? (
-                        <Button onClick={() => stopRecording(true)} size="small" shape="outline">
-                            {c('Action').t`Cancel`}
-                        </Button>
-                    ) : (
+        <SettingsPanel title={c('Label').t`Keyboard shortcuts`}>
+            <ShortcutRow
+                keys={accelerator ? getAcceleratorKeyLabels(accelerator, platform) : []}
+                placeholder={recording ? c('Info').t`Press a shortcut…` : undefined}
+                description={
+                    recording
+                        ? (hint ?? c('Info').t`Press Esc to cancel.`)
+                        : c('Info').t`Show or hide ${PASS_APP_NAME} from any application`
+                }
+                actions={
+                    recording ? (
                         <>
                             {accelerator && (
-                                <Button onClick={() => update(null)} size="small" shape="ghost" disabled={loading}>
+                                <Button onClick={handleRemove} size="small" shape="ghost">
                                     {c('Action').t`Remove`}
                                 </Button>
                             )}
-                            <Button onClick={startRecording} size="small" shape="outline" loading={loading}>
-                                {accelerator ? c('Action').t`Change` : c('Action').t`Set shortcut`}
+                            <Button onClick={() => stopRecording(true)} size="small" shape="outline">
+                                {c('Action').t`Cancel`}
                             </Button>
                         </>
-                    )}
-                </div>
-            </div>
+                    ) : (
+                        <Button onClick={startRecording} size="small" shape="outline" loading={loading}>
+                            {c('Action').t`Configure`}
+                        </Button>
+                    )
+                }
+            >
+                {!recording && accelerator && !active && (
+                    <span className="block color-danger text-sm mt-1">
+                        {c('Warning').t`This shortcut is used by another application. Choose a different one.`}
+                    </span>
+                )}
+            </ShortcutRow>
         </SettingsPanel>
     );
 };

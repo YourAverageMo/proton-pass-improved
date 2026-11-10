@@ -27,7 +27,7 @@ describe('GlobalShortcut', () => {
             setTheme: jest.fn(async () => {}),
         } as Partial<ContextBridgeApi> as ContextBridgeApi;
         const result = render(<GlobalShortcut />);
-        await waitFor(() => expect(result.getByText('Global shortcut')).toBeDefined());
+        await waitFor(() => expect(result.getByText('Keyboard shortcuts')).toBeDefined());
         return result;
     };
 
@@ -44,7 +44,7 @@ describe('GlobalShortcut', () => {
             globalShortcut: createBridge({ accelerator: null, active: false }),
         } as Partial<ContextBridgeApi> as ContextBridgeApi;
         const { queryByText } = render(<GlobalShortcut />);
-        expect(queryByText('Global shortcut')).toBeNull();
+        expect(queryByText('Keyboard shortcuts')).toBeNull();
     });
 
     test('shows the configured shortcut', async () => {
@@ -52,7 +52,7 @@ describe('GlobalShortcut', () => {
         expect(getByText('Ctrl')).toBeDefined();
         expect(getByText('Shift')).toBeDefined();
         expect(getByText('P')).toBeDefined();
-        expect(getByText('Change')).toBeDefined();
+        expect(getByText('Configure')).toBeDefined();
     });
 
     test('warns when another application holds the shortcut', async () => {
@@ -63,7 +63,7 @@ describe('GlobalShortcut', () => {
     test('records a new shortcut', async () => {
         const { getByText, findByText } = await setup();
 
-        fireEvent.click(getByText('Set shortcut'));
+        fireEvent.click(getByText('Configure'));
         expect(bridge.setSuspended).toHaveBeenCalledWith(true);
         expect(getByText('Press a shortcut…')).toBeDefined();
 
@@ -75,45 +75,58 @@ describe('GlobalShortcut', () => {
 
         fireEvent.keyDown(window, { code: 'KeyP', ctrlKey: true, shiftKey: true });
         expect(bridge.set).toHaveBeenCalledWith('Control+Shift+P');
-        expect(await findByText('Change')).toBeDefined();
+        expect(await findByText('Configure')).toBeDefined();
         expect(getByText('Ctrl')).toBeDefined();
     });
 
     test('Escape cancels recording and restores the shortcut', async () => {
         const { getByText } = await setup({ accelerator: 'Control+Shift+P', active: true });
 
-        fireEvent.click(getByText('Change'));
+        fireEvent.click(getByText('Configure'));
         fireEvent.keyDown(window, { code: 'Escape' });
 
         expect(bridge.setSuspended).toHaveBeenLastCalledWith(false);
         expect(bridge.set).not.toHaveBeenCalled();
-        expect(getByText('Change')).toBeDefined();
+        expect(getByText('Configure')).toBeDefined();
     });
 
     test('leaving the window cancels recording', async () => {
         const { getByText } = await setup();
 
-        fireEvent.click(getByText('Set shortcut'));
-        act(() => void window.dispatchEvent(new Event('blur')));
+        fireEvent.click(getByText('Configure'));
+        act(() => {
+            window.dispatchEvent(new Event('blur'));
+        });
 
         expect(bridge.setSuspended).toHaveBeenLastCalledWith(false);
-        expect(getByText('Set shortcut')).toBeDefined();
+        expect(getByText('Configure')).toBeDefined();
     });
 
     test('unmounting while recording restores the shortcut', async () => {
         const { getByText, unmount } = await setup();
 
-        fireEvent.click(getByText('Set shortcut'));
+        fireEvent.click(getByText('Configure'));
         unmount();
 
         expect(bridge.setSuspended).toHaveBeenLastCalledWith(false);
     });
 
     test('removes the shortcut', async () => {
-        const { getByText, findByText } = await setup({ accelerator: 'Control+Shift+P', active: true });
+        const { getByText, queryByText, findByText } = await setup({ accelerator: 'Control+Shift+P', active: true });
 
+        expect(queryByText('Remove')).toBeNull();
+        fireEvent.click(getByText('Configure'));
         fireEvent.click(getByText('Remove'));
+
         expect(bridge.set).toHaveBeenCalledWith(null);
         expect(await findByText('Not configured')).toBeDefined();
+    });
+
+    test('offers no removal when no shortcut is set', async () => {
+        const { getByText, queryByText } = await setup();
+
+        fireEvent.click(getByText('Configure'));
+        expect(queryByText('Remove')).toBeNull();
+        expect(getByText('Cancel')).toBeDefined();
     });
 });

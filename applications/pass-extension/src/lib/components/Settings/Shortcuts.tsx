@@ -4,6 +4,7 @@ import { c } from 'ttag';
 
 import { Button } from '@proton/atoms/Button/Button';
 import { SettingsPanel } from '@proton/pass/components/Settings/SettingsPanel';
+import { ShortcutRow as BaseShortcutRow } from '@proton/pass/components/Settings/ShortcutRow';
 import browser from '@proton/pass/lib/globals/browser';
 import { PASS_APP_NAME } from '@proton/shared/lib/constants';
 import { isMac } from '@proton/shared/lib/helpers/browser';
@@ -17,38 +18,18 @@ type ShortcutRowProps = {
     onConfigure?: () => void;
 };
 
-const ShortcutKeys: FC<{ shortcut: string }> = ({ shortcut }) => (
-    <span className="flex items-center gap-1">
-        {shortcut.split('+').map((key, i) => (
-            <kbd
-                key={i}
-                className="inline-flex items-center justify-center h-6 px-2 text-sm border border-weak rounded"
-                style={{ fontFamily: 'system-ui, sans-serif', minWidth: '1.5rem' }}
-            >
-                {isMac() && key === 'Ctrl' ? 'Cmd' : key}
-            </kbd>
-        ))}
-    </span>
-);
-
 const ShortcutRow: FC<ShortcutRowProps> = ({ description, shortcut, onConfigure }) => (
-    <div className="flex flex-nowrap items-center justify-between gap-4">
-        <div className="flex-1">
-            <span className="block mb-1">
-                {shortcut ? (
-                    <ShortcutKeys shortcut={shortcut} />
-                ) : (
-                    <span className="color-weak">{c('Info').t`Not configured`}</span>
-                )}
-            </span>
-            <span className="block color-weak text-sm">{description}</span>
-        </div>
-        {BUILD_TARGET !== 'firefox' && (
-            <Button onClick={onConfigure} size="small" shape="outline">
-                {c('Action').t`Configure`}
-            </Button>
-        )}
-    </div>
+    <BaseShortcutRow
+        description={description}
+        keys={shortcut ? shortcut.split('+').map((key) => (isMac() && key === 'Ctrl' ? 'Cmd' : key)) : []}
+        actions={
+            BUILD_TARGET !== 'firefox' && (
+                <Button onClick={onConfigure} size="small" shape="outline">
+                    {c('Action').t`Configure`}
+                </Button>
+            )
+        }
+    />
 );
 
 export const Shortcuts: FC = () => {

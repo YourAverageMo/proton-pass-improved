@@ -131,6 +131,7 @@
         "./components/Settings/Offline": "./components/Settings/Offline.tsx",
         "./components/Settings/ReportAProblem": "./components/Settings/ReportAProblem.tsx",
         "./components/Settings/SettingsPanel": "./components/Settings/SettingsPanel.tsx",
+        "./components/Settings/ShortcutRow": "./components/Settings/ShortcutRow.tsx",
         "./components/Settings/Theme": "./components/Settings/Theme.tsx",
         "./components/Settings/Views/Settings": "./components/Settings/Views/Settings.tsx",
         "./components/Spotlight/SpotlightContent": "./components/Spotlight/SpotlightContent.tsx",
