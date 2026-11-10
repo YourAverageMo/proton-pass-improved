@@ -153,6 +153,7 @@
         "./hooks/useAsyncModalHandles": "./hooks/useAsyncModalHandles.ts",
         "./hooks/useConfirm": "./hooks/useConfirm.ts",
         "./hooks/useContextFactory": "./hooks/useContextFactory.ts",
+        "./hooks/useCopyShortcuts": "./hooks/useCopyShortcuts.ts",
         "./hooks/useEnsureMounted": "./hooks/useEnsureMounted.ts",
         "./hooks/useFeatureFlag": "./hooks/useFeatureFlag.ts",
         "./hooks/useNavigateToAccount": "./hooks/useNavigateToAccount.ts",

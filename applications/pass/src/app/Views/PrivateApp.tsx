@@ -35,6 +35,7 @@ import { UpsellingProvider } from '@proton/pass/components/Upsell/UpsellingProvi
 import { FirstChild } from '@proton/pass/components/Utils/FirstChild';
 import { VaultActionsProvider } from '@proton/pass/components/Vault/VaultActionsProvider';
 import { useArrowKeyNavigation } from '@proton/pass/hooks/useArrowKeyNavigation';
+import { useCopyShortcuts } from '@proton/pass/hooks/useCopyShortcuts';
 import { usePassConfig } from '@proton/pass/hooks/usePassConfig';
 import { selectLockMode, selectLockSetupRequired } from '@proton/pass/store/selectors/settings';
 import { selectIsSSO } from '@proton/pass/store/selectors/user';
@@ -58,6 +59,7 @@ const Main: FC = () => {
 
     useSpotlightListener();
     useArrowKeyNavigation(DESKTOP_BUILD);
+    useCopyShortcuts();
     useSaveFilterPreferences();
 
     const handleLock = useCallback(() => authService.lock(lockMode, { broadcast: true, soft: false }), [lockMode]);

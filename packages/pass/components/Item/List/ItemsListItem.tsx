@@ -13,6 +13,7 @@ import { useItemOptimisticState } from '../../../hooks/useItem';
 import type { DraggableItem } from '../../../hooks/useItemDrag';
 import { useItemLoading } from '../../../hooks/useItemLoading';
 import { isDisabledAliasItem } from '../../../lib/items/item.predicates';
+import { getItemKey } from '../../../lib/items/item.utils';
 import { matchChunks } from '../../../lib/search/match-chunks';
 import { isVaultShare } from '../../../lib/shares/share.predicates';
 import { isWritableVault } from '../../../lib/vaults/vault.predicates';
@@ -75,6 +76,7 @@ export const ItemsListItem = memo(
                     href="#"
                     id={id}
                     data-arrow-nav-item="result"
+                    data-item-key={getItemKey(item)}
                     data-arrow-nav-entry={active || undefined}
                     draggable={canDrag}
                     className={clsx([

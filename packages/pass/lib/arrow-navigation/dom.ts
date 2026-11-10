@@ -58,7 +58,7 @@ const ARROW_OWNING_INPUTS = new Set([
 
 const TEXT_INPUTS = new Set(['text', 'search', 'email', 'password', 'url', 'tel']);
 
-const MODAL_SELECTOR = 'dialog[open], [aria-modal="true"], [role="dialog"]';
+export const MODAL_SELECTOR = 'dialog[open], [aria-modal="true"], [role="dialog"]';
 
 const toRect = ({ top, right, bottom, left }: DOMRect): Rect => ({ top, right, bottom, left });
 
