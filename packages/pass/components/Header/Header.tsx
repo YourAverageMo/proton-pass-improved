@@ -8,9 +8,11 @@ import { HeaderSettings } from './HeaderSettings';
 import type { HeaderProps } from './types';
 
 export const Header: FC<HeaderProps> = (props) => (
-    <Switch>
-        <Route path={getLocalPath('monitor')}>{(subRoute) => <HeaderMonitor {...subRoute} {...props} />}</Route>
-        <Route path={getLocalPath('settings')}>{() => <HeaderSettings {...props} />}</Route>
-        <Route>{() => <HeaderMain {...props} />}</Route>
-    </Switch>
+    <div className="shrink-0" data-arrow-nav-zone="header">
+        <Switch>
+            <Route path={getLocalPath('monitor')}>{(subRoute) => <HeaderMonitor {...subRoute} {...props} />}</Route>
+            <Route path={getLocalPath('settings')}>{() => <HeaderSettings {...props} />}</Route>
+            <Route>{() => <HeaderMain {...props} />}</Route>
+        </Switch>
+    </div>
 );

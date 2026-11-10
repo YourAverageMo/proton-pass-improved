@@ -14,7 +14,11 @@ export const Sidebar: FC<PropsWithChildren> = ({ children }) => {
     const organization = useOrganization();
 
     return (
-        <div id="pass-sidebar" className="sidebar hidden lg:flex flex-nowrap flex-column outline-none bg-strong">
+        <div
+            id="pass-sidebar"
+            data-arrow-nav-zone="sidebar"
+            className="sidebar hidden lg:flex flex-nowrap flex-column outline-none bg-strong"
+        >
             <TitlebarDragRegion />
             <h1 className="sr-only">{getAppName(APPS.PROTONPASS)}</h1>
             <div className="w-full logo-container hidden md:flex shrink-0 justify-space-between items-center flex-nowrap">

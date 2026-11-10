@@ -1,4 +1,4 @@
-import type { ComponentType, ElementType } from 'react';
+import type { ComponentType, ElementType, KeyboardEvent } from 'react';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { c } from 'ttag';
@@ -53,6 +53,17 @@ const HideButton = ({ hidden, onClick }: { hidden: boolean; onClick: () => void 
         {hidden ? <IcEye size={5} /> : <IcEyeSlash size={5} />}
     </Button>
 );
+
+/** Makes the plain `div` container reachable and activable from the keyboard */
+const CLICKABLE_PROPS = {
+    tabIndex: 0,
+    role: 'button',
+    onKeyDown: (evt: KeyboardEvent<HTMLElement>) => {
+        if (evt.key !== 'Enter' || evt.target !== evt.currentTarget) return;
+        evt.preventDefault();
+        evt.currentTarget.click();
+    },
+};
 
 const DEFAULT_HIDDEN_VALUE = '••••••••••••';
 
@@ -128,6 +139,7 @@ export const ValueControl = <E extends ElementType = 'div'>({
                 className
             )}
             {...(canCopy ? { value: clipboardValue ?? value, onCopy } : { onClick: disabled ? undefined : onClick })}
+            {...(!canCopy && interactive ? CLICKABLE_PROPS : {})}
         >
             <FieldBox
                 actions={

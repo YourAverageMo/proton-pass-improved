@@ -350,7 +350,7 @@ export const ItemViewPanel: FC<Props> = ({
                 />
             }
         >
-            {children(itemActions)}
+            <div data-arrow-nav-entry>{children(itemActions)}</div>
         </Panel>
     );
 };

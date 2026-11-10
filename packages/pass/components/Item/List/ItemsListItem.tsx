@@ -74,6 +74,8 @@ export const ItemsListItem = memo(
                     as="a"
                     href="#"
                     id={id}
+                    data-arrow-nav-item="result"
+                    data-arrow-nav-entry={active || undefined}
                     draggable={canDrag}
                     className={clsx([
                         'pass-item-list--item interactive-pseudo w-full',

@@ -1,4 +1,4 @@
-import type { MouseEvent, PropsWithChildren } from 'react';
+import type { KeyboardEvent, MouseEvent, PropsWithChildren } from 'react';
 import { type FC, useRef } from 'react';
 
 import { c } from 'ttag';
@@ -19,12 +19,23 @@ export const ClickToCopy: FC<PropsWithChildren<ClickToCopyProps>> = ({ className
     const copyToClipboard = useCopyToClipboard();
     const getValue = () => (value instanceof Function ? value() : value);
 
+    const copy = () => {
+        if (!value) return;
+        void copyToClipboard(getValue());
+        onCopy?.();
+    };
+
     const handleClick = (evt: MouseEvent) => {
         if (ref.current && SelectionManager.hasChildOf(ref.current)) evt.preventDefault();
-        else if (value) {
-            void copyToClipboard(getValue());
-            onCopy?.();
-        }
+        else copy();
+    };
+
+    /** Only handle Enter on the field itself: Enter on a nested
+     * button (eg: show/hide) must not copy as well */
+    const handleKeyDown = (evt: KeyboardEvent) => {
+        if (evt.key !== 'Enter' || evt.target !== evt.currentTarget) return;
+        evt.preventDefault();
+        copy();
     };
 
     return (
@@ -33,7 +44,7 @@ export const ClickToCopy: FC<PropsWithChildren<ClickToCopyProps>> = ({ className
         <div
             ref={ref}
             className={clsx('cursor-pointer overflow-hidden', className)}
-            onKeyDown={(evt) => evt.key === 'Enter' && copyToClipboard(getValue())}
+            onKeyDown={handleKeyDown}
             onClick={handleClick}
             tabIndex={0}
             // eslint-disable-next-line jsx-a11y/prefer-tag-over-role

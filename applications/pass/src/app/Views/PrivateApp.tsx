@@ -34,6 +34,7 @@ import { WithSpotlight } from '@proton/pass/components/Spotlight/WithSpotlight';
 import { UpsellingProvider } from '@proton/pass/components/Upsell/UpsellingProvider';
 import { FirstChild } from '@proton/pass/components/Utils/FirstChild';
 import { VaultActionsProvider } from '@proton/pass/components/Vault/VaultActionsProvider';
+import { useArrowKeyNavigation } from '@proton/pass/hooks/useArrowKeyNavigation';
 import { usePassConfig } from '@proton/pass/hooks/usePassConfig';
 import { selectLockMode, selectLockSetupRequired } from '@proton/pass/store/selectors/settings';
 import { selectIsSSO } from '@proton/pass/store/selectors/user';
@@ -56,6 +57,7 @@ const Main: FC = () => {
     const connectivityBar = useAppConnectivityBar(status, localID);
 
     useSpotlightListener();
+    useArrowKeyNavigation(DESKTOP_BUILD);
     useSaveFilterPreferences();
 
     const handleLock = useCallback(() => authService.lock(lockMode, { broadcast: true, soft: false }), [lockMode]);
