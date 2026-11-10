@@ -235,13 +235,15 @@ const GlobalShortcutDesktop: FC<{ bridge: NonNullable<Window['ctxBridge']>['glob
 
     return (
         <SettingsPanel title={c('Label').t`Keyboard shortcuts`}>
-            {renderRow('summon', accelerator, c('Info').t`Show or hide ${PASS_APP_NAME} from any application`)}
-            {COPY_SHORTCUT_FIELDS.map((field) => (
-                <Fragment key={field}>
-                    <hr className="m-0 border-weak" />
-                    {renderRow(field, copyShortcuts[field], getCopyShortcutDescription(field))}
-                </Fragment>
-            ))}
+            <div className="flex flex-column gap-4">
+                {renderRow('summon', accelerator, c('Info').t`Show or hide ${PASS_APP_NAME} from any application`)}
+                {COPY_SHORTCUT_FIELDS.map((field) => (
+                    <Fragment key={field}>
+                        <hr className="m-0 border-weak" />
+                        {renderRow(field, copyShortcuts[field], getCopyShortcutDescription(field))}
+                    </Fragment>
+                ))}
+            </div>
         </SettingsPanel>
     );
 };
