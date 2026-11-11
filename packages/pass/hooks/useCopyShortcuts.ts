@@ -36,7 +36,7 @@ import type { MaybeNull } from '../types/utils';
 import { otpGenerationErrorNotifcation } from './useOTPCode';
 
 /** Leaves time to see the "Copied to clipboard" notification before hiding */
-export const COPY_SHORTCUT_HIDE_DELAY_MS = 750;
+export const COPY_SHORTCUT_HIDE_DELAY_MS = 400;
 
 /** Item forms and history, where the shortcuts must not copy the saved item */
 const getItemFormRoutes = () =>
