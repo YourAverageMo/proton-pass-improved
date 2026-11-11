@@ -10,6 +10,9 @@ import { acceleratorFromKeyEvent, isValidAccelerator } from '../global-shortcut/
 /** Marks an item-list entry with its item key (`getItemKey`) */
 export const ITEM_KEY_ATTR = 'data-item-key';
 
+/** Marks an input where the copy shortcuts still work, unless it has selected text */
+export const COPY_SHORTCUT_INPUT_ATTR = 'data-copy-shortcuts';
+
 export type CopyShortcutField = 'email' | 'username' | 'password' | 'totp';
 
 /** In the order shown in the settings */

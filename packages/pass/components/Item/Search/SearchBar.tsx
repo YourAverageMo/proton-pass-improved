@@ -11,6 +11,7 @@ import { IcMagnifier } from '@proton/icons/icons/IcMagnifier';
 import { useItemFilters } from '../../../hooks/items/useItemFilters';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { useSearchShortcut } from '../../../hooks/useSearchShortcut';
+import { COPY_SHORTCUT_INPUT_ATTR } from '../../../lib/copy-shortcuts/copy-shortcuts';
 import { selectFolder } from '../../../store/selectors/folders';
 import { selectShare } from '../../../store/selectors/shares';
 import type { ShareType } from '../../../types/data/shares';
@@ -115,6 +116,7 @@ export const SearchBar = memo(({ disabled, trash }: Props) => {
             className="pass-searchbar"
             data-arrow-nav-down="[data-arrow-nav-item='result']"
             data-arrow-nav-type-target
+            {...{ [COPY_SHORTCUT_INPUT_ATTR]: true }}
             inputClassName="text-rg text-ellipsis"
             disabled={disabled}
             onBlur={handleBlur}

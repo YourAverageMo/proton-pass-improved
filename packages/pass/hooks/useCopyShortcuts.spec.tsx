@@ -7,7 +7,7 @@ import { type MemoryHistory, createMemoryHistory } from 'history';
 import { createStore } from 'redux';
 
 import { getItemRoute, getNewItemRoute } from '../components/Navigation/routing';
-import { ITEM_KEY_ATTR } from '../lib/copy-shortcuts/copy-shortcuts';
+import { COPY_SHORTCUT_INPUT_ATTR, ITEM_KEY_ATTR } from '../lib/copy-shortcuts/copy-shortcuts';
 import { getItemKey } from '../lib/items/item.utils';
 import type { SelectedItem } from '../types/data/items';
 import type { ContextBridgeApi } from '../types/desktop';
@@ -128,9 +128,37 @@ describe('useCopyShortcuts', () => {
         expect(mockCopyToClipboard).not.toHaveBeenCalled();
     });
 
-    test('ignores keydowns from an input', async () => {
+    test('ignores keydowns from an unmarked input', async () => {
         document.body.innerHTML = '<input id="input" />';
         document.getElementById('input')!.focus();
+        renderHook(() => useCopyShortcuts(), { wrapper });
+
+        const event = press();
+        await flush();
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(mockCopyToClipboard).not.toHaveBeenCalled();
+    });
+
+    test('copies from a marked input without a selection', async () => {
+        document.body.innerHTML = `<input id="search" value="query" ${COPY_SHORTCUT_INPUT_ATTR} />`;
+        const input = document.getElementById('search') as HTMLInputElement;
+        input.focus();
+        input.setSelectionRange(5, 5);
+        renderHook(() => useCopyShortcuts(), { wrapper });
+
+        const event = press();
+        await flush();
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(mockCopyToClipboard).toHaveBeenCalledWith('open@proton.me');
+    });
+
+    test('leaves text selected in a marked input to the native copy', async () => {
+        document.body.innerHTML = `<input id="search" value="query" ${COPY_SHORTCUT_INPUT_ATTR} />`;
+        const input = document.getElementById('search') as HTMLInputElement;
+        input.focus();
+        input.setSelectionRange(0, 3);
         renderHook(() => useCopyShortcuts(), { wrapper });
 
         const event = press();

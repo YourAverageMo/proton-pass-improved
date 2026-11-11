@@ -17,6 +17,7 @@ import {
 import { useCopyToClipboard } from '../components/Settings/Clipboard/ClipboardProvider';
 import { MODAL_SELECTOR } from '../lib/arrow-navigation/dom';
 import {
+    COPY_SHORTCUT_INPUT_ATTR,
     ITEM_KEY_ATTR,
     getCopyShortcutField,
     getCopyShortcutValue,
@@ -47,7 +48,17 @@ const getItemFormRoutes = () =>
 
 const EDITABLE_SELECTOR = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
-const isEditable = (el: MaybeNull<Element>) => el?.closest(EDITABLE_SELECTOR) != null;
+/** Editable elements keep their own keyboard behaviour. A marked input lets
+ * the shortcuts through unless it has selected text, which native Ctrl+C
+ * copies (`window.getSelection()` doesn't report selections in inputs). */
+const blocksShortcut = (el: MaybeNull<Element>) => {
+    const editable = el?.closest(EDITABLE_SELECTOR);
+    if (!editable) return false;
+    if (editable instanceof HTMLInputElement && editable.hasAttribute(COPY_SHORTCUT_INPUT_ATTR)) {
+        return editable.selectionStart !== editable.selectionEnd;
+    }
+    return true;
+};
 
 const hasTextSelection = () => (window.getSelection()?.toString() ?? '').length > 0;
 
@@ -92,7 +103,7 @@ const useCopyShortcutsImpl = () => {
             const field = getCopyShortcutField(event, shortcuts, platform);
             if (!field || inItemFormRef.current) return;
 
-            if (isEditable(document.activeElement) || isEditable(event.target as MaybeNull<Element>)) return;
+            if (blocksShortcut(document.activeElement) || blocksShortcut(event.target as MaybeNull<Element>)) return;
             if (hasTextSelection() || document.querySelector(MODAL_SELECTOR)) return;
 
             const target = getTargetItem(openItem.current);
